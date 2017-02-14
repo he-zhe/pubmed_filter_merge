@@ -1,20 +1,20 @@
 <!doctype html>
 <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
 <title>{{title}}</title>
-<script
-  src="https://code.jquery.com/jquery-3.1.1.js"
-  integrity="sha256-16cdPddA6VdVInumRGo6IbivbERE8p7CQR3HzTBuELA="
-  crossorigin="anonymous"></script>
+
 <script>
 $(document).ready(function(){
-    $("div.show").click(function(){
+    $("div.showme").click(function(){
         $(this).next("div").toggle(150);
     });
     $("a.showall").click(function(){
-        $("div.hidden").show(150);
+        $("div.hidden_default").show(150);
     });
     $("a.hideall").click(function(){
-        $("div.hidden").hide(150);
+        $("div.hidden_default").hide(150);
     });
     $("a.submit_neg").click(function(){
       var url = "/submit_neg/" + $(this).attr("pmid");
@@ -29,107 +29,38 @@ $(document).ready(function(){
 </script>
 
 <style>
-ul.banner {
-    list-style-type: none;
-    margin: 0;
-    padding: 0;
-    overflow: hidden;
-    background-color: #333;
-    position: fixed;
-    top: 0;
-    width: 100%;
-}
 
-li.banner {
-    float: left;
-}
+body { padding-top: 70px; }
 
-li.banner a {
-    display: block;
-    color: white;
-    text-align: center;
-    padding: 14px 16px;
-    text-decoration: none;
-}
-
-li.banner a:hover {
-    background-color: #111;
-}
-
-
-
-.btn {
-  border-radius: 5px;
-  text-align: center;
-  width: 100px;
-  padding: 5px 5px;
-  font-size: 15px;
-  text-decoration: none;
-  margin: 10px;
-  color: #fff;
-  display: inline-block;
+.btn-group-vertical {
   position: fixed;
+  bottom: 5%;
+  right: 5%;
 }
-
-.btn:active {
-  transform: translate(0px, 5px);
-  -webkit-transform: translate(0px, 5px);
-  box-shadow: 0px 1px 0px 0px;
-}
-
-.blue {
-  background-color: #55acee;
-  box-shadow: 0px 5px 0px 0px #3C93D5;
-  bottom: 100px;
-  right: 10px;
-}
-
-.blue:hover {
-  background-color: #6FC6FF;
-}
-
-.red {
-  background-color: #e74c3c;
-  box-shadow: 0px 5px 0px 0px #CE3323;
-  bottom: 60px;
-  right: 10px;
-}
-
-.red:hover {
-  background-color: #FF6656;
-}
-
 
 
 
 p{
 margin-top: 5px;
 margin-bottom: 0;
-margin-left:15%;
-margin-right:15%;
 }
 
-p.title{font-weight:bold}
+p.title{font-weight:bold;}
 
 .right{
   text-align: right;
 }
 
-div.page{
-  margin-top: 50px;
-}
 
 div.form{
-  margin-left:15%;
-  margin-right:15%;
   padding-top: 100px;
 }
 
-div.show:hover{
+div.showme:hover{
 	background-color: AliceBlue;
 }
 
-div.hidden{
+div.hidden_default{
 	display: none;
   padding-top: 15px;
 }
@@ -144,16 +75,31 @@ border-bottom: 1px solid #dbdbdb;
 </style>
 
 <body>
+  <nav class="navbar navbar-inverse navbar-fixed-top">
+  <div class="container-fluid">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <div class="collapse navbar-collapse" id="myNavbar">
+      <ul class="nav navbar-nav">
+        <li class='banner'><a href="/{{recent_12_months[0][0]}}/{{recent_12_months[0][1]}}">This Month</a></li>
+        {% for year_month in recent_12_months[1:] %}
+          <li class='banner'><a href="/{{year_month[0]}}/{{year_month[1]}}">{{year_month[1]}}/{{year_month[0]}}</a></li>
+        {% endfor %}
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        <li><a href="/submit_pos">Suggest papers</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
 
-<ul class='banner'>
-<li class='banner'><a href="/{{recent_12_months[0][0]}}/{{recent_12_months[0][1]}}">This Month</a></li>
-{% for year_month in recent_12_months[1:] %}
-  <li class='banner'><a href="/{{year_month[0]}}/{{year_month[1]}}">{{year_month[1]}}/{{year_month[0]}}</a></li>
-{% endfor %}
-<li class='banner' style="float:right"><a href="/submit_pos">Suggest papers</a></li>
-</ul>
 
-
+<div class="container">
 
 {% block body %}{% endblock %}
 
@@ -165,5 +111,7 @@ border-bottom: 1px solid #dbdbdb;
 
   {% endif %}
 {% endwith %}
+
+</div>
 
 </body>
