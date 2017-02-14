@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block body %}
+
+<a href="#" class="btn blue showall">Show All</a>
+<a href="#" class="btn red hideall">Hide All</a>
+
+
+
+<div class='page'>
+{% for row in rows %}
+<div class='entry'>
+<div class='show'>
+    {#<p>{{ row[0] }}</p>  pmid #}
+    <p class="title">{{ row[1] }} <span style="color:white">{{row[8]}}</span></p> {# title #}
+    {#<p>{{ row[2] }}</p> journal_full #}
+    <p>{{ row[3] }}&nbsp;&nbsp;&nbsp;&nbsp;{{row[6][5:7]}}/{{row[6][-2:]}}/{{row[6][0:4]}}</p> {# journal_abbr #}
+    <p>{{ row[4] }}</p> {# author_list #}
+</div>
+  <div class='hidden'>
+    <p>{{ row[5] }}</p> {# abstract #}
+    <p><a href="https://www.ncbi.nlm.nih.gov/pubmed/{{row[0]}}">https://www.ncbi.nlm.nih.gov/pubmed/{{row[0]}}</a></p>
+    <p class='right'><a href="#/" class="submit_neg" pmid="{{row[0]}}">This is not an article of interest</a></p>
+    <p class='right hidden'></p>
+</div>
+</div>
+{% endfor %}
+</div>
+{% endblock %}
