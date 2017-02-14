@@ -69,3 +69,8 @@ def submit_pos():
     return render_template('submit_pos.html', form=form,
                            recent_12_months=recent_12_months,
                            title='Suggest Papers')
+
+
+@app.route('/robots.txt')
+def robots():
+    return app.send_static_file('robots.txt')
