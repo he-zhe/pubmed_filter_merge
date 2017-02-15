@@ -1,14 +1,37 @@
 {% extends "base.html" %}
 {% block body %}
 
+<script>
 
+
+$(document).ready(function(){
+    $("a.sort_by_date").click(function(){
+      var $entries = $('div.entry');
+      var $page = $('div.page');
+      $entries.sort(function(a, b){
+        var date_a = $(a).attr('date');
+        var date_b = $(b).attr('date');
+        return (date_a < date_b) ? 1 : (date_a > date_b) ? -1 : 0;
+      });
+
+      $entries.detach().appendTo($page);
+    });
+});
+
+
+
+
+
+
+</script>
+<a href="#" class="sort_by_date btn btn-default pull-right">Sort by Date</a>
 
 <div class='page'>
 {% for row in rows %}
-<div class='entry'>
+<div class='entry' date='{{row[6]}}'>
 <div class='showme'>
     {#<p>{{ row[0] }}</p>  pmid #}
-    <p class="title">{{ row[1] }} <span style="color:white">{{row[8]}}</span></p> {# title #}
+    <p class="title">{{ row[1] }}</p> {# title #}
     {#<p>{{ row[2] }}</p> journal_full #}
     <p>{{ row[3] }}&nbsp;&nbsp;&nbsp;&nbsp;{{row[6][5:7]}}/{{row[6][-2:]}}/{{row[6][0:4]}}</p> {# journal_abbr #}
     <p>{{ row[4] }}</p> {# author_list #}
