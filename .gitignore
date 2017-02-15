@@ -59,7 +59,7 @@ ENV/
 app/pubmed_filter/training_set.db
 
 # Serverside might be newer
-app/pubmed_filter/litrev.db
+app/pubmed_filter/lit_rev.db
 app/pubmed_filter/model.pickle
 
 
