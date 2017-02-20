@@ -1,13 +1,10 @@
 from app import app
 import sqlite3
 from app.rows_by_dates import rows_in_month
-from flask import render_template, flash, request, url_for, redirect
+from flask import render_template, flash, request, url_for, redirect, make_response
 from datetime import date
-# from flask_wtf import FlaskForm
+import json
 from wtforms import Form, StringField, validators
-
-with open("./app/static/journal.txt", 'r') as f:
-    journal_rank = {line.strip().lower(): i for i, line in enumerate(f)}
 
 conn = sqlite3.connect('./app/pubmed_filter/lit_rev.db',
                        check_same_thread=False)
@@ -33,18 +30,48 @@ for i in range(11):
 @app.route('/index')
 @app.route('/<int:year>/<int:month>')
 def entry(year=date.today().year, month=date.today().month):
+    cookie_name = 'history' + str(year) + str(month).zfill(2)
+
+    # Get read history
+    history_str = request.cookies.get(cookie_name)
+    if history_str:
+        history_set = set(json.loads(history_str))
+    else:
+        history_set = set()
+
+    #  Get all entries for the month from db
     entries = list(rows_in_month(c, month, year))
 
-    # sort rows by pre-defined journal rank, if not existed, put to last
-    entries.sort(key=lambda x: journal_rank[x[2].lower()] if x[2].lower() in journal_rank else 999)
-    return render_template("entry.html",
-                           recent_12_months=recent_12_months,
-                           rows=entries,
-                           title=str(month) + '/' + str(year))
+    #  Find all unread entries
+    new_set = set()
+    for e in entries:
+        if e[0] not in history_set:
+            new_set.add(e[0])
+
+    res = make_response(render_template("entry.html",
+                        recent_12_months=recent_12_months,
+                        rows=entries,
+                        new_set=new_set,
+                        title=str(month) + '/' + str(year)))
+
+    #  Update history set
+    for e in entries:
+        history_set.add(e[0])
+
+    #  Why save history for each month, instead of all in one?
+    #  It will exceed maximun size requiement of a single cookie.
+    #  http://browsercookielimits.squawky.net/
+    #  Note: This might fail due to a large amount of enties for a month.
+    #  > ~400
+    res.set_cookie(cookie_name, json.dumps(list(history_set)),
+                   max_age=2147483647)
+    return res
 
 
 @app.route('/submit_neg/<int:pmid>')
 def submit_neg(pmid):
+    if not isinstance(pmid, int):
+        return
     with open('./app/static/neg_submit.txt', 'a') as f:
         f.write(str(pmid) + '\n')
     return str(pmid) + " has been added to negative training set. Thank you!"
