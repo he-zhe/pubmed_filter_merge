@@ -1,10 +1,11 @@
 {% extends "base.html" %}
 {% block body %}
 
-
-<div class="btn-group pull-right">
-  <a href="#" class="sort_by_pubdate btn btn-default pull-right">Sort by PubDate</a>
-  <a href="#" class="sort_by_journal btn btn-default pull-right">Sort by Journal</a>
+<div style="height:30px">
+  <div class="btn-group pull-right sort_button" >
+    <a href="#" class="sort_by_pubdate btn btn-default pull-right">Sort by PubDate</a>
+    <a href="#" class="sort_by_journal btn btn-default pull-right">Sort by Journal</a>
+  </div>
 </div>
 
 <div class='page'>
@@ -23,8 +24,8 @@
 </div>
   <div class='hidden_default'>
     <p>{{ row[5] }}</p> {# abstract #}
-    <p><a href="https://www.ncbi.nlm.nih.gov/pubmed/{{row[0]}}">https://www.ncbi.nlm.nih.gov/pubmed/{{row[0]}}</a></p>
-    <p class='right'><a href="#/" class="submit_neg" pmid="{{row[0]}}">This is not an article of interest</a></p>
+    <p><a href="https://www.ncbi.nlm.nih.gov/pubmed/{{row[0]}}">https://www.ncbi.nlm.nih.gov/pubmed/{{row[0]}}</a>
+      <a href="#/" class="submit_neg pull-right btn btn-default btn-xs" pmid="{{row[0]}}">Report error</a></p>
     <p class='right hidden_default'></p>
 </div>
 </div>
