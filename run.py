@@ -1,6 +1,6 @@
 #!flask/bin/python
 from app import app
-app.secret_key = 'super super secret key'
+app.secret_key = 'tf0YYZSq8wTDyNRoI3fwo7ey344Gw6Ay'
 
 if __name__ == '__main__':
     try:
