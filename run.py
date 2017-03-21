@@ -7,7 +7,7 @@ with open('secret_key.txt', 'r') as f:
 
 if __name__ == '__main__':
     try:
-        app.run(debug=True, use_reloader=False)
-        # app.run()
+        # app.run(debug=True, use_reloader=False)
+        app.run()
     except (KeyboardInterrupt, SystemExit):
         pass
