@@ -12,23 +12,25 @@ conn = sqlite3.connect('./app/pubmed_filter/lit_rev.db',
 c = conn.cursor()
 
 conn_training = sqlite3.connect('./app/pubmed_filter/training_set.db',
-                       check_same_thread=False)
+                                check_same_thread=False)
 c_training = conn_training.cursor()
 
 
-recent_12_months = []
-year_walk = current_year = date.today().year
-month_walk = current_month = date.today().month
-recent_12_months.append((current_year, current_month))
+def get_recent_12_months():
+    recent_12_months = []
+    year_walk = current_year = date.today().year
+    month_walk = current_month = date.today().month
+    recent_12_months.append((current_year, current_month))
 
-for i in range(11):
-    month_walk -= 1
-    if month_walk > 0:
-        recent_12_months.append((year_walk, month_walk))
-    else:
-        month_walk = 12
-        year_walk -= 1
-        recent_12_months.append((year_walk, month_walk))
+    for i in range(11):
+        month_walk -= 1
+        if month_walk > 0:
+            recent_12_months.append((year_walk, month_walk))
+        else:
+            month_walk = 12
+            year_walk -= 1
+            recent_12_months.append((year_walk, month_walk))
+    return recent_12_months
 
 
 @app.route('/')
@@ -54,7 +56,7 @@ def entry(year=date.today().year, month=date.today().month):
             new_set.add(e[0])
 
     res = make_response(render_template("entry.html",
-                        recent_12_months=recent_12_months,
+                        recent_12_months=get_recent_12_months(),
                         rows=entries,
                         new_set=new_set,
                         title=str(month) + '/' + str(year)))
@@ -99,7 +101,7 @@ def submit_pos():
         flash('Thanks for submitting paper!')
         return redirect(url_for('submit_pos'))
     return render_template('submit_pos.html', form=form,
-                           recent_12_months=recent_12_months,
+                           recent_12_months=get_recent_12_months(),
                            title='Suggest Papers')
 
 
@@ -131,7 +133,7 @@ def manage():
                         continue
                     rows.append(fetch_pmid_info(pmid))
         return render_template("manage.html",
-                               recent_12_months=recent_12_months,
+                               recent_12_months=get_recent_12_months(),
                                rows=rows,
                                title=title)
     elif request.method == 'POST':
