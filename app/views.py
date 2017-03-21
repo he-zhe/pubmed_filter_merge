@@ -5,10 +5,15 @@ from flask import render_template, flash, request, url_for, redirect, make_respo
 from datetime import date
 import json
 from wtforms import Form, StringField, validators
+from app.pubmed_filter.fetch_and_filter import fetch_pmid_info
 
 conn = sqlite3.connect('./app/pubmed_filter/lit_rev.db',
                        check_same_thread=False)
 c = conn.cursor()
+
+conn_training = sqlite3.connect('./app/pubmed_filter/training_set.db',
+                       check_same_thread=False)
+c_training = conn_training.cursor()
 
 
 recent_12_months = []
@@ -96,6 +101,59 @@ def submit_pos():
     return render_template('submit_pos.html', form=form,
                            recent_12_months=recent_12_months,
                            title='Suggest Papers')
+
+
+# Manage neg page
+@app.route('/bitter', methods=['GET', 'POST'])
+@app.route('/sweet', methods=['GET', 'POST'])
+def manage():
+    rule = request.url_rule
+
+    if 'bitter' in rule.rule:
+        pos_or_neg = 'neg'
+        title = 'Submitted Negative entries'
+        path = './app/static/neg_submit.txt'
+    elif 'sweet' in rule.rule:
+        pos_or_neg = 'pos'
+        title = 'Submitted Positive entries'
+        path = './app/static/pos_submit.txt'
+
+    if request.method == 'GET':
+        with open(path, 'r') as f:
+            pmids = set(f.readlines())
+            if pos_or_neg == 'neg':
+                rows = c.execute('SELECT * FROM lit_rev WHERE pmid in ({0})'.format(','.join(pmids)))
+            else:
+                rows = []
+                for pmid in pmids:
+                    c.execute('SELECT * FROM lit_rev WHERE pmid=?', (pmid,))
+                    if len(c.fetchall()) > 0:
+                        continue
+                    rows.append(fetch_pmid_info(pmid))
+        return render_template("manage.html",
+                               recent_12_months=recent_12_months,
+                               rows=rows,
+                               title=title)
+    elif request.method == 'POST':
+        pmids = request.form.getlist('check')
+        for pmid in pmids:
+            if pos_or_neg == 'neg':
+                c.execute('SELECT * FROM lit_rev WHERE pmid=?', (pmid,))
+                row = c.fetchone()
+            else:
+                row = fetch_pmid_info(pmid)
+
+            abstract = row[5]
+            c_training.execute("INSERT INTO training_set VALUES(?, ?);", (abstract, pos_or_neg))
+            if pos_or_neg == 'neg':
+                c.execute('DELETE FROM lit_rev WHERE pmid=?', (pmid,))
+            else:
+                c.execute("""INSERT OR IGNORE INTO lit_rev (pmid, title, journal_full,
+                    journal_abbr, namelist, abstract, pubdate)
+                    VALUES(?,?,?,?,?,?,?);""", row)
+        conn_training.commit()
+        conn.commit()
+        return ','.join(pmids) + ' has been processed in lit_rev and stored in training_set: ' + pos_or_neg
 
 
 @app.route('/robots.txt')

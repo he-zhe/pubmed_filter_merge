@@ -67,3 +67,6 @@ app/static/pos_submit.txt
 
 # Rope project settings
 .ropeproject
+
+# Secret key
+secret_key.txt

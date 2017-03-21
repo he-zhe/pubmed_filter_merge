@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+{% block body %}
+
+
+<div class='page'>
+<form method=post action="#">
+{% for row in rows %}
+
+<div class='entry' pubdate='{{row[6]}}' journal='{{ row[2] }}'>
+<div class='showme'>
+    {#<p>{{ row[0] }}</p>  pmid #}
+    <p class="title"> <input type="checkbox" name='check' value="{{ row[0] }}" checked="checked"> {{ row[1] }}
+      {% if row[0] in new_set %}
+      <span class="label label-primary">New</span>
+      {% endif %}
+    </p> {# title #}
+    {#<p>{{ row[2] }}</p> journal_full #}
+    <p>{{ row[3] }}&nbsp;&nbsp;&nbsp;&nbsp;{{row[6][5:7]}}/{{row[6][-2:]}}/{{row[6][0:4]}}</p> {# journal_abbr #}
+    <p>{{ row[4] }}</p> {# author_list #}
+</div>
+  <div class='hidden_default'>
+    <p>{{ row[5] }}</p> {# abstract #}
+    <p><a href="https://www.ncbi.nlm.nih.gov/pubmed/{{row[0]}}">https://www.ncbi.nlm.nih.gov/pubmed/{{row[0]}}</a>
+    <p class='right hidden_default'></p>
+</div>
+</div>
+{% endfor %}
+<input type="submit" value="Submit">
+</form>
+</div>
+
+<div class="btn-group-vertical">
+  <a href="#" class="blue showall btn btn-success">Show All</a>
+  <a href="#" class="red hideall btn btn-warning">Hide All</a>
+</div>
+
+<script>
+$(document).ready(function(){
+    $("div.showme").click(function(){
+        $(this).next("div").toggle(150);
+    });
+
+    $("a.showall").click(function(){
+        $("div.hidden_default").show(150);
+    });
+
+    $("a.hideall").click(function(){
+        $("div.hidden_default").hide(150);
+    });
+
+    $("a.submit_neg").click(function(){
+      var url = "/submit_neg/" + $(this).attr("pmid");
+      var next_p = $(this).parent().next();
+      $.get(url, function(data, status){
+        next_p.text(data);
+        next_p.show(150);
+      });
+    });
+
+    $("a.sort_by_pubdate").click(function(){
+      var $entries = $('div.entry');
+      var $page = $('div.page');
+      $entries.sort(function(a, b){
+        var date_a = $(a).attr('pubdate');
+        var date_b = $(b).attr('pubdate');
+        return (date_a < date_b) ? 1 : (date_a > date_b) ? -1 : 0;
+      });
+
+      $entries.detach().appendTo($page);
+    });
+
+    $("a.sort_by_journal").click(function(){
+      var $entries = $('div.entry');
+      var $page = $('div.page');
+      $entries.sort(function(a, b){
+        var a = $(a).attr('journal');
+        var b = $(b).attr('journal');
+
+        var a_rank = 999;
+        var b_rank = 999;
+
+        if (a in journal_dict){
+          a_rank = journal_dict[a];
+        }
+        if (b in journal_dict){
+          b_rank = journal_dict[b];
+        }
+
+        return (a_rank - b_rank);
+      });
+
+      $entries.detach().appendTo($page);
+    });
+
+    var journal_dict = {
+      'Cell':0,
+      'Nature':1,
+      'Nature neuroscience':2,
+      'Nature reviews. Neuroscience':3,
+      'Neuron':4,
+      'eLife':5,
+      'Proceedings of the National Academy of Sciences of the United States of America':6,
+      'PLoS biology':7,
+      'Current biology : CB':8,
+      'The Journal of neuroscience : the official journal of the Society for Neuroscience':9,
+      'Cell reports':10,
+      'Developmental cell':11,
+      'Nature communications':12,
+      'PLoS genetics':13,
+      'Current opinion in neurobiology':14,
+      'Genetics':15,
+      'BMC biology':16,
+      'PLoS computational biology':17,
+      'Genome biology and evolution':18,
+      'Chemical senses':19,
+      'Fly':20,
+      'PLoS neglected tropical diseases':21,
+      'BMC genomics':22,
+      'The Journal of biological chemistry':23,
+      'Development (Cambridge, England)':24,
+      'Journal of insect science (Online)':25,
+      'Insects':26,
+      'Journal of visualized experiments : JoVE':27,
+      'The Journal of physiology':28,
+      'eNeuro':29,
+      'Biology open':30,
+      'Scientific reports':31,
+      'Biology letters':32,
+      'PeerJ':33,
+      'Journal of chemical ecology':34,
+      'Insect molecular biology':35,
+      'G3 (Bethesda, Md.)':36,
+      'Journal of insect physiology':37,
+      'Journal of neurogenetics':38,
+      'PloS one':39,
+      'Insect science':40,
+      'The Journal of experimental biology':41,
+      'The Journal of comparative neurology':42,
+      'Proceedings. Biological sciences':43,
+      'Genes & development':44,
+      'Genetics and molecular research : GMR':45,
+      'Genes, brain, and behavior':46,
+      'Endocrinology':47,
+      'Arthropod structure & development':48,
+      'Physiology & behavior':49,
+      'Journal of neurophysiology':50,
+      'Frontiers in cellular neuroscience':51,
+      'The European journal of neuroscience':52,
+      'Advances in nutrition (Bethesda, Md.)':53,
+      'BMC evolutionary biology':54,
+      'Journal of evolutionary biology':55,
+      'Frontiers in neuroscience':56,
+      'Insect biochemistry and molecular biology':57,
+      'Neurobiology of learning and memory':58,
+      'Neural plasticity':59,
+      'Frontiers in physiology':60,
+      'Frontiers in behavioral neuroscience':61,
+      'Neuroscience':62,
+      'Ecology and evolution':63,
+      'Current opinion in insect science':64,
+      'Archives of biochemistry and biophysics':65,
+      'Appetite':66,
+      'BMC neuroscience':67,
+      'Journal of agricultural and food chemistry':68,
+      'Frontiers in psychology':69,
+      'Current pharmaceutical design':70,
+      'International journal of molecular sciences':71,
+      'Biochemical and biophysical research communications':72,
+      'Methods in cell biology':73,
+      'Neuroscience letters':74,
+      'Die Naturwissenschaften':75,
+      'Rhinology':76,
+      'Journal of medical entomology':77,
+      'Bulletin of entomological research':78,
+      'Journal of chemical neuroanatomy':79,
+      'Journal of economic entomology':80,
+      'Environmental entomology':81,
+      'Journal of oral rehabilitation':82,
+      'BioMed research international':83,
+      'Behavioural processes':84,
+      'Methods in molecular biology (Clifton, N.J.)':85,
+      'Perception':86,
+      'Zoological science':87,
+      'Journal of genetics':88,
+      'Microscopy research and technique':89,
+      'Temperature (Austin, Tex.)':90,
+      'International forum of allergy & rhinology':91,
+      'Evolution; international journal of organic evolution':92,
+      'European archives of oto-rhino-laryngology : official journal of the European Federation of Oto-Rhino-Laryngological Societies (EUFOS) : affiliated with the German Society for Oto-Rhino-Laryngology - Head and Neck Surgery':93,
+      'Biochimica et biophysica acta':94,
+      'Reviews in endocrine & metabolic disorders':95,
+      'Comparative biochemistry and physiology. Part D, Genomics & proteomics':96,
+      'Biosensors & bioelectronics':97,
+      'Otolaryngology--head and neck surgery : official journal of American Academy of Otolaryngology-Head and Neck Surgery':98,
+      'Parasites & vectors':99,
+      'Sensors (Basel, Switzerland)':100,
+    };
+});
+</script>
+{% endblock %}

@@ -7,6 +7,105 @@ import calendar
 import sqlite3
 import sys
 
+# Provide email to NCBI, required
+Entrez.email = "hezhe88@gmail.com"
+
+
+def get_info_from_pubmed_xml(each_article):
+    MedlineCitation_e = each_article.find('MedlineCitation')
+    if not MedlineCitation_e:
+        return
+
+    Article_e = MedlineCitation_e.find('Article')
+
+    # get abstract
+    if Article_e.find('Abstract') is None:
+        return
+
+    if Article_e.find('Abstract').find('AbstractText') is None:
+        return
+
+    abstract_str = ''
+
+    # Loop through AbstractText tagS, some articles divided abstract
+    # into several parts.
+    for abstract_tag in Article_e.iter('AbstractText'):
+        if abstract_tag.text:
+            abstract_str += abstract_tag.text + '\n'
+
+    # get PMID
+    PMID = MedlineCitation_e.find('PMID').text
+
+    # get title
+    try:
+        title_str = Article_e.find('ArticleTitle').text
+    except:
+        return
+    # get journal
+    try:
+        Journal_e = Article_e.find('Journal')
+        journal_full_str = Journal_e.find('Title').text
+        journal_abbr_str = Journal_e.find('ISOAbbreviation').text
+    except:
+        return
+
+    # get author name list
+    lastnames = []
+    initials = []
+    namelist = []
+
+    for author_tag in Article_e.iter('Author'):
+        if author_tag.find('LastName') is not None:
+            lastnames.append(author_tag.find('LastName').text)
+        else:
+            lastnames.append(" ")
+        if author_tag.find('Initials') is not None:
+            initials.append(author_tag.find('Initials').text)
+        else:
+            initials.append(" ")
+
+    for n in range(len(lastnames)):
+        name = [initials[n], lastnames[n]]
+        namelist.append(" ".join(name))
+
+    namelist_str = ', '.join(namelist)
+
+    # get publish date
+    try:
+        ArticleDate_e = Article_e.find('ArticleDate')
+        article_year = ArticleDate_e.find('Year').text
+        article_month = ArticleDate_e.find('Month').text
+        article_day = ArticleDate_e.find('Day').text
+    except:  # if ArticleDate not exists, use PubMedPubDate instead
+        PubMedPubDate_e = each_article.find('PubmedData').find(
+            'History').findall('PubMedPubDate')[0]
+        article_year = PubMedPubDate_e.find('Year').text
+        article_month = PubMedPubDate_e.find('Month').text
+        article_day = PubMedPubDate_e.find('Day').text
+
+    if len(article_month) > 2:
+        article_month = month_dict[article_month]
+
+    article_month = article_month.zfill(2)
+    article_day = article_day.zfill(2)
+    pubdate_str = article_year + '-' + article_month + '-' + \
+        article_day
+
+    return [int(PMID), title_str, journal_full_str,
+            journal_abbr_str, namelist_str, abstract_str,
+            pubdate_str]
+
+
+def fetch_pmid_info(pmid):
+    detail_handle = Entrez.efetch(db="pubmed",
+                                  retstart=0,
+                                  id=pmid,
+                                  retmode='xml')
+    detail_xml = detail_handle.read()
+    tree = ET.fromstring(detail_xml)
+    article = tree[0]
+    return get_info_from_pubmed_xml(article)
+
 
 def fetch_and_filter(RECENT_DAYS=2):
 
@@ -18,8 +117,6 @@ def fetch_and_filter(RECENT_DAYS=2):
     with open(PATH, 'rb') as f:
         model = pickle.load(f)
 
-    # Provide email to NCBI, required
-    Entrez.email = "hezhe88@gmail.com"
 
     # Retrive pmids in recent X days
     search_handle = Entrez.esearch(db="pubmed", term='', reldate=RECENT_DAYS,
@@ -85,26 +182,12 @@ def fetch_and_filter(RECENT_DAYS=2):
         #       <PubmedData>
 
         for each_article in tree:
-            MedlineCitation_e = each_article.find('MedlineCitation')
-            if not MedlineCitation_e:
+            row = get_info_from_pubmed_xml(each_article)
+
+            if not row:
                 continue
 
-            Article_e = MedlineCitation_e.find('Article')
-
-            # get abstract
-            if Article_e.find('Abstract') is None:
-                continue
-
-            if Article_e.find('Abstract').find('AbstractText') is None:
-                continue
-
-            abstract_str = ''
-
-            # Loop through AbstractText tagS, some articles divided abstract
-            # into several parts.
-            for abstract_tag in Article_e.iter('AbstractText'):
-                if abstract_tag.text:
-                    abstract_str += abstract_tag.text + '\n'
+            abstract_str = row[5]
 
             # Flag to track whether the article is added because of keywords
             # (KW) or machine learning(ML)
@@ -117,64 +200,6 @@ def fetch_and_filter(RECENT_DAYS=2):
                 KW_or_ML = 'ML'
             else:
                 continue
-
-            # get PMID
-            PMID = MedlineCitation_e.find('PMID').text
-
-            # get title
-            try:
-                title_str = Article_e.find('ArticleTitle').text
-            except:
-                continue
-            # get journal
-            try:
-                Journal_e = Article_e.find('Journal')
-                journal_full_str = Journal_e.find('Title').text
-                journal_abbr_str = Journal_e.find('ISOAbbreviation').text
-            except:
-                continue
-
-            # get author name list
-            lastnames = []
-            initials = []
-            namelist = []
-
-            for author_tag in Article_e.iter('Author'):
-                if author_tag.find('LastName') is not None:
-                    lastnames.append(author_tag.find('LastName').text)
-                else:
-                    lastnames.append(" ")
-                if author_tag.find('Initials') is not None:
-                    initials.append(author_tag.find('Initials').text)
-                else:
-                    initials.append(" ")
-
-            for n in range(len(lastnames)):
-                name = [initials[n], lastnames[n]]
-                namelist.append(" ".join(name))
-
-            namelist_str = ', '.join(namelist)
-
-            # get publish date
-            try:
-                ArticleDate_e = Article_e.find('ArticleDate')
-                article_year = ArticleDate_e.find('Year').text
-                article_month = ArticleDate_e.find('Month').text
-                article_day = ArticleDate_e.find('Day').text
-            except:  # if ArticleDate not exists, use PubMedPubDate instead
-                PubMedPubDate_e = each_article.find('PubmedData').find(
-                    'History').findall('PubMedPubDate')[0]
-                article_year = PubMedPubDate_e.find('Year').text
-                article_month = PubMedPubDate_e.find('Month').text
-                article_day = PubMedPubDate_e.find('Day').text
-
-            if len(article_month) > 2:
-                article_month = month_dict[article_month]
-
-            article_month = article_month.zfill(2)
-            article_day = article_day.zfill(2)
-            pubdate_str = article_year + '-' + article_month + '-' + \
-                article_day
             # print(PMID)
             # print(title_str)
             # print(abstract_str)
@@ -187,10 +212,7 @@ def fetch_and_filter(RECENT_DAYS=2):
             # stroe in database
             c.execute("""INSERT OR IGNORE INTO lit_rev (pmid, title, journal_full,
                 journal_abbr, namelist, abstract, pubdate)
-                VALUES(?,?,?,?,?,?,?);""",
-                      (int(PMID), title_str, journal_full_str,
-                          journal_abbr_str, namelist_str, abstract_str,
-                          pubdate_str))
+                VALUES(?,?,?,?,?,?,?);""", row)
             if article_counter % 10000 == 0:
                 conn.commit()
 
